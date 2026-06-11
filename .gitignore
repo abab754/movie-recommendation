@@ -1,0 +1,36 @@
+# Data
+data/ml-1m/
+
+# Model artifacts
+model/model_store/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual env
+venv/
+.venv/
+env/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log

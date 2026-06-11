@@ -1,0 +1,82 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - rec-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - rec-network
+
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rec_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rec_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-recommendations}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - rec-network
+
+  producer:
+    build:
+      context: .
+      dockerfile: pipeline/Dockerfile
+    command: python -m pipeline.producer
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INTERACTIONS_TOPIC: user-interactions
+      PRODUCER_DELAY_MS: ${PRODUCER_DELAY_MS:-100}
+      RATINGS_FILE: /app/data/ml-1m/ratings.dat
+    volumes:
+      - ./data:/app/data
+    networks:
+      - rec-network
+
+  consumer:
+    build:
+      context: .
+      dockerfile: pipeline/Dockerfile
+    command: python -m pipeline.consumer
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INTERACTIONS_TOPIC: user-interactions
+      KAFKA_TRIGGER_TOPIC: model-triggers
+      RETRAIN_THRESHOLD: ${RETRAIN_THRESHOLD:-10000}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-recommendations}
+      POSTGRES_USER: ${POSTGRES_USER:-rec_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rec_pass}
+    networks:
+      - rec-network
+
+volumes:
+  postgres-data:
+
+networks:
+  rec-network:
+    driver: bridge
