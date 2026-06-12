@@ -83,8 +83,64 @@ services:
     networks:
       - rec-network
 
+  trainer:
+    build:
+      context: .
+      dockerfile: model/Dockerfile
+    command: python -m model.retrain_scheduler
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TRIGGER_TOPIC: model-triggers
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-recommendations}
+      POSTGRES_USER: ${POSTGRES_USER:-rec_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rec_pass}
+      MODEL_STORE_PATH: /app/model_store
+      RATINGS_FILE: /app/data/ml-1m/ratings.dat
+    volumes:
+      - ./data:/app/data
+      - model-store:/app/model_store
+    networks:
+      - rec-network
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_INTERACTIONS_TOPIC: user-interactions
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-recommendations}
+      POSTGRES_USER: ${POSTGRES_USER:-rec_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rec_pass}
+      MODEL_STORE_PATH: /app/model_store
+      MOVIES_FILE: /app/data/ml-1m/movies.dat
+    volumes:
+      - ./data:/app/data
+      - model-store:/app/model_store
+    networks:
+      - rec-network
+
 volumes:
   postgres-data:
+  model-store:
 
 networks:
   rec-network:
