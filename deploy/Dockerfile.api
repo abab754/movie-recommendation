@@ -1,0 +1,27 @@
+# Deployment image for the API: model artifact + movie metadata baked in,
+# no Kafka required (KAFKA_ENABLED=false set in the platform environment).
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    psycopg2-binary \
+    pydantic \
+    numpy \
+    scikit-surprise
+
+COPY . /app/
+
+# Bake in the trained model and movie metadata
+RUN mkdir -p /app/model_store /app/data/ml-1m \
+    && cp /app/deploy/svd_latest.pkl /app/model_store/svd_latest.pkl \
+    && cp /app/deploy/version.txt /app/model_store/version.txt \
+    && cp /app/deploy/movies.dat /app/data/ml-1m/movies.dat
+
+ENV MODEL_STORE_PATH=/app/model_store
+ENV MOVIES_FILE=/app/data/ml-1m/movies.dat
+ENV KAFKA_ENABLED=false
+
+CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}

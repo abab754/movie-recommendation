@@ -13,5 +13,6 @@ exclude_also =
     def precompute_popular_movies
     def load_model
     def _get_producer
+    def _insert_event_direct
     def delivery_report
     if __name__ == .__main__.:

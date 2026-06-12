@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir \
 
 COPY monitoring/app.py /app/app.py
 
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD streamlit run app.py --server.port=${PORT:-8501} --server.address=0.0.0.0

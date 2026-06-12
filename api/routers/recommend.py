@@ -23,6 +23,9 @@ _movie_titles: dict[int, str] = {}
 
 
 def get_db_connection():
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        return psycopg2.connect(database_url)
     return psycopg2.connect(
         host=POSTGRES_HOST,
         port=POSTGRES_PORT,

@@ -21,6 +21,9 @@ st.title("Movie Recommendation Platform — Monitoring")
 
 @st.cache_resource
 def get_connection():
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        return psycopg2.connect(database_url)
     return psycopg2.connect(
         host=POSTGRES_HOST,
         port=POSTGRES_PORT,
