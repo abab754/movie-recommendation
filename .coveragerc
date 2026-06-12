@@ -1,0 +1,17 @@
+# Coverage config. Functions excluded below require live infrastructure
+# (Kafka/Postgres/model artifacts) and are covered by integration testing
+# via the running docker compose stack, not unit tests.
+[report]
+exclude_also =
+    def run_\w+
+    def get_db_connection
+    def wait_for_postgres
+    def load_ratings_from_db
+    def load_movie_metadata
+    def get_user_rated_movies
+    def log_recommendation
+    def precompute_popular_movies
+    def load_model
+    def _get_producer
+    def delivery_report
+    if __name__ == .__main__.:
