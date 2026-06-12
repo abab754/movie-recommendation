@@ -10,7 +10,7 @@ from starlette.requests import Request
 class LatencyMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, latency_store: deque = None):
         super().__init__(app)
-        self.latency_store = latency_store or deque(maxlen=1000)
+        self.latency_store = latency_store if latency_store is not None else deque(maxlen=1000)
 
     async def dispatch(self, request: Request, call_next):
         start = time.perf_counter()
