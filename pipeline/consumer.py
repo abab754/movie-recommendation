@@ -3,6 +3,7 @@ stores to Postgres, and triggers retraining + drift detection."""
 
 import json
 import os
+import time
 
 import psycopg2
 from confluent_kafka import Consumer, Producer
@@ -76,7 +77,24 @@ def send_retrain_trigger(producer: Producer, valid_count: int):
     print(f"Sent retrain trigger at {valid_count} valid ratings")
 
 
+def wait_for_postgres(max_retries=30, delay=2):
+    """Wait for Postgres to be ready before proceeding."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            conn = get_db_connection()
+            conn.close()
+            print("Postgres is ready.")
+            return
+        except psycopg2.OperationalError:
+            print(f"Waiting for Postgres... (attempt {attempt}/{max_retries})")
+            time.sleep(delay)
+    raise RuntimeError("Could not connect to Postgres after max retries")
+
+
 def run_consumer():
+    # Wait for dependencies to be ready
+    wait_for_postgres()
+
     print(f"Connecting to Kafka at {KAFKA_BOOTSTRAP_SERVERS}...")
     consumer = Consumer(
         {

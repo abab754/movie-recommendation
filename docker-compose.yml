@@ -25,7 +25,7 @@ services:
   postgres:
     image: postgres:15
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-rec_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rec_pass}
@@ -33,6 +33,11 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rec_user -d recommendations"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - rec-network
 
@@ -41,6 +46,7 @@ services:
       context: .
       dockerfile: pipeline/Dockerfile
     command: python -m pipeline.producer
+    restart: on-failure
     depends_on:
       - kafka
     environment:
@@ -58,9 +64,12 @@ services:
       context: .
       dockerfile: pipeline/Dockerfile
     command: python -m pipeline.consumer
+    restart: on-failure
     depends_on:
-      - kafka
-      - postgres
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_INTERACTIONS_TOPIC: user-interactions
