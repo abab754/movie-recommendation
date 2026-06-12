@@ -2,6 +2,13 @@
 
 End-to-end movie recommendation system with real-time data ingestion, SVD collaborative filtering, a low-latency serving API, automated retraining, drift detection, a monitoring dashboard, and A/B testing infrastructure. Fully Dockerized.
 
+## Live Demo
+
+- **API**: https://api-production-a0364.up.railway.app — try [`/recommend/2`](https://api-production-a0364.up.railway.app/recommend/2), [`/health`](https://api-production-a0364.up.railway.app/health), [`/docs`](https://api-production-a0364.up.railway.app/docs)
+- **Monitoring Dashboard**: https://monitoring-production-4b75.up.railway.app
+
+Deployed on Railway as a slim stack (Postgres seeded with 200K MovieLens events + API with the trained model baked in + dashboard). The full Kafka pipeline below runs locally via Docker Compose.
+
 ## Architecture
 
 ```
