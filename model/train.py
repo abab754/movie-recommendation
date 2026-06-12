@@ -111,7 +111,7 @@ def log_model_run(version: str, ndcg: float, hr: float, n_ratings: int, rmse: fl
                 INSERT INTO model_runs (version, ndcg_10, hr_10, n_ratings, rmse)
                 VALUES (%s, %s, %s, %s, %s)
                 """,
-                (version, ndcg, hr, n_ratings, rmse),
+                (version, float(ndcg), float(hr), int(n_ratings), float(rmse)),
             )
         conn.commit()
         conn.close()
