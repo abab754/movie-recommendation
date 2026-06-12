@@ -138,6 +138,28 @@ services:
     networks:
       - rec-network
 
+  monitoring:
+    build:
+      context: .
+      dockerfile: monitoring/Dockerfile
+    ports:
+      - "8501:8501"
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-recommendations}
+      POSTGRES_USER: ${POSTGRES_USER:-rec_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rec_pass}
+      API_URL: http://api:8000
+    networks:
+      - rec-network
+
 volumes:
   postgres-data:
   model-store:
